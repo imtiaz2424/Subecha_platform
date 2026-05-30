@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Project Detail - Subecha{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div id="loadingDiv" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div id="projectContent" style="display:none">
+        <div class="row">
+            <!-- Left: Project Details -->
+            <div class="col-md-8">
+                <div class="card p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge-category" id="projectCategory"></span>
+                        <span class="badge bg-success" id="projectStatus"></span>
+                    </div>
+                    <h2 class="fw-bold" id="projectTitle"></h2>
+                    <p class="text-muted" id="projectDescription"></p>
+
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="card bg-light p-3 text-center">
+                                <i class="fas fa-dollar-sign text-primary fa-2x mb-2"></i>
+                                <h5 class="fw-bold" id="projectBudget"></h5>
+                                <small class="text-muted">Budget</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light p-3 text-center">
+                                <i class="fas fa-calendar text-primary fa-2x mb-2"></i>
+                                <h5 class="fw-bold" id="projectDeadline"></h5>
+                                <small class="text-muted">Deadline</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light p-3 text-center">
+                                <i class="fas fa-paper-plane text-primary fa-2x mb-2"></i>
+                                <h5 class="fw-bold" id="projectProposals"></h5>
+                                <small class="text-muted">Proposals</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attachment -->
+                    <div id="attachmentDiv" class="mt-3" style="display:none">
+                        <h6 class="fw-bold">Attachment:</h6>
+                        <a id="attachmentLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-download me-1"></i>Download Attachment
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Reviews Section -->
+                <div class="card p-4 mb-4">
+                    <h5 class="fw-bold mb-3">Reviews</h5>
+                    <div id="reviewsContainer">
+                        <p class="text-muted">No reviews yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Client Info + Proposal -->
+            <div class="col-md-4">
+                <!-- Client Info -->
+                <div class="card p-4 mb-4">
+                    <h5 class="fw-bold mb-3">Client Information</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;font-size:1.2rem">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0" id="clientName"></h6>
+                            <small class="text-muted" id="clientEmail"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proposal Form -->
+                <div class="card p-4" id="proposalCard">
+                    <h5 class="fw-bold mb-3">Submit Proposal</h5>
+                    <div id="proposalAlert" class="alert" style="display:none"></div>
+                    <div id="proposalForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Cover Letter</label>
+                            <textarea id="coverLetter" class="form-control" rows="5" placeholder="Describe why you are the best fit for this project..."></textarea>
+                        </div>
+                        <button onclick="submitProposal()" class="btn btn-primary w-100" id="proposalBtn">
+                            <i class="fas fa-paper-plane me-1"></i>Submit Proposal
+                        </button>
+                    </div>
+                    <div id="loginPrompt" style="display:none">
+                        <p class="text-muted text-center">Please login to submit a proposal.</p>
+                        <a href="/login/" class="btn btn-primary w-100">Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const projectId = window.location.pathname.split('/').filter(Boolean).pop();
+    const token = localStorage.getItem('access_token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Load project details
+    fetch(`/api/projects/${projectId}/`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loadingDiv').style.display = 'none';
+            document.getElementById('projectContent').style.display = 'block';
+
+            document.getElementById('projectTitle').textContent = data.title;
+            document.getElementById('projectDescription').textContent = data.description;
+            document.getElementById('projectCategory').textContent = data.category_name || 'General';
+            document.getElementById('projectStatus').textContent = data.status;
+            document.getElementById('projectBudget').textContent = '$' + data.budget;
+            document.getElementById('projectDeadline').textContent = data.deadline;
+            document.getElementById('projectProposals').textContent = data.proposal_count;
+            document.getElementById('clientName').textContent = data.client_info?.full_name || 'Client';
+            document.getElementById('clientEmail').textContent = data.client_info?.email || '';
+
+            // Attachment
+            if (data.attachment) {
+                document.getElementById('attachmentDiv').style.display = 'block';
+                document.getElementById('attachmentLink').href = data.attachment;
+            }
+
+            // Reviews
+            if (data.reviews && data.reviews.length > 0) {
+                document.getElementById('reviewsContainer').innerHTML = data.reviews.map(r => `
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>${r.client_name}</strong>
+                            <span class="text-warning">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+                        </div>
+                        <p class="text-muted small mb-0">${r.comment}</p>
+                    </div>
+                `).join('');
+            }
+
+            // Show/hide proposal form
+            if (!token) {
+                document.getElementById('proposalForm').style.display = 'none';
+                document.getElementById('loginPrompt').style.display = 'block';
+            } else if (user.role === 'client') {
+                document.getElementById('proposalCard').style.display = 'none';
+            }
+        })
+        .catch(() => {
+            document.getElementById('loadingDiv').innerHTML = '<p class="text-danger">Failed to load project.</p>';
+        });
+
+    // Submit proposal
+    async function submitProposal() {
+        const btn = document.getElementById('proposalBtn');
+        const alertBox = document.getElementById('proposalAlert');
+        const coverLetter = document.getElementById('coverLetter').value;
+
+        if (!coverLetter.trim()) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Please write a cover letter.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+
+        try {
+            const res = await fetch('/api/proposals/submit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    project: projectId,
+                    cover_letter: coverLetter
+                })
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Proposal submitted successfully!';
+                btn.innerHTML = '✅ Submitted!';
+            } else {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = result.error || 'Failed to submit proposal.';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Submit Proposal';
+            }
+        } catch (err) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Something went wrong.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Submit Proposal';
+        }
+    }
+</script>
+{% endblock %}

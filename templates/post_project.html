@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Post a Project - Subecha{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-5">
+                <h3 class="fw-bold mb-4">Post a New Project</h3>
+                <div id="formAlert" class="alert" style="display:none"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Project Title</label>
+                    <input type="text" id="title" class="form-control form-control-lg" placeholder="e.g. Build a WordPress Website">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description</label>
+                    <textarea id="description" class="form-control" rows="5" placeholder="Describe your project requirements in detail..."></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Category</label>
+                        <select id="category" class="form-select form-select-lg">
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Budget ($)</label>
+                        <input type="number" id="budget" class="form-control form-control-lg" placeholder="e.g. 500">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Deadline</label>
+                    <input type="date" id="deadline" class="form-control form-control-lg">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Attachment (Optional)</label>
+                    <input type="file" id="attachment" class="form-control">
+                </div>
+
+                <button onclick="postProject()" class="btn btn-primary btn-lg w-100" id="postBtn">
+                    <i class="fas fa-plus me-2"></i>Post Project
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const token = localStorage.getItem('access_token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Redirect if not logged in or not a client
+    if (!token) {
+        window.location.href = '/login/';
+    } else if (user.role !== 'client') {
+        window.location.href = '/';
+    }
+
+    // Load categories
+    fetch('/api/projects/categories/')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('category');
+            data.forEach(cat => {
+                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        });
+
+    // Set min date to today
+    document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
+
+    async function postProject() {
+        const btn = document.getElementById('postBtn');
+        const alertBox = document.getElementById('formAlert');
+
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const category = document.getElementById('category').value;
+        const budget = document.getElementById('budget').value;
+        const deadline = document.getElementById('deadline').value;
+        const attachment = document.getElementById('attachment').files[0];
+
+        if (!title || !description || !category || !budget || !deadline) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Please fill in all required fields.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Posting...';
+
+        try {
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('category', category);
+            formData.append('budget', budget);
+            formData.append('deadline', deadline);
+            if (attachment) formData.append('attachment', attachment);
+
+            const res = await fetch('/api/projects/create/', {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token},
+                body: formData
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Project posted successfully!';
+                btn.innerHTML = '✅ Posted!';
+                setTimeout(() => {
+                    window.location.href = `/projects/${result.id}/`;
+                }, 1500);
+            } else {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-danger';
+                const errors = Object.values(result).flat().join(' ');
+                alertBox.textContent = errors;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus me-2"></i>Post Project';
+            }
+        } catch (err) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Something went wrong.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus me-2"></i>Post Project';
+        }
+    }
+</script>
+{% endblock %}

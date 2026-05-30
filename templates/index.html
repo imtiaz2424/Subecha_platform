@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Subecha - Find Top Freelancers{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 80px 0;">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Find the Perfect Freelancer</h1>
+        <p class="lead mb-5">Connect with skilled professionals for your projects</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="/projects/" class="btn btn-light btn-lg px-5">Browse Projects</a>
+            <a href="/register/" class="btn btn-outline-light btn-lg px-5">Get Started</a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="card p-4">
+                    <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold" id="totalProjects">0</h3>
+                    <p class="text-muted">Active Projects</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card p-4">
+                    <i class="fas fa-users fa-3x text-purple mb-3" style="color:#7c3aed"></i>
+                    <h3 class="fw-bold">500+</h3>
+                    <p class="text-muted">Freelancers</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card p-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h3 class="fw-bold">1000+</h3>
+                    <p class="text-muted">Completed Projects</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Projects -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="fw-bold mb-4 text-center">Recent Projects</h2>
+        <div class="row" id="recentProjects">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/projects/" class="btn btn-primary btn-lg px-5">View All Projects</a>
+        </div>
+    </div>
+</section>
+
+<!-- How it Works -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <h2 class="fw-bold mb-5 text-center">How It Works</h2>
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="card p-4 h-100">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:bold;">1</div>
+                    <h5 class="fw-bold">Post a Project</h5>
+                    <p class="text-muted">Describe your project and set your budget</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card p-4 h-100">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:bold;">2</div>
+                    <h5 class="fw-bold">Receive Proposals</h5>
+                    <p class="text-muted">Get proposals from skilled freelancers</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card p-4 h-100">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:bold;">3</div>
+                    <h5 class="fw-bold">Get it Done</h5>
+                    <p class="text-muted">Work with the best and get results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load recent projects
+    fetch('/api/projects/')
+        .then(res => res.json())
+        .then(data => {
+            const projects = data.results || data;
+            document.getElementById('totalProjects').textContent = projects.length + '+';
+            const container = document.getElementById('recentProjects');
+            if (projects.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No projects yet.</p>';
+                return;
+            }
+            container.innerHTML = projects.slice(0, 3).map(p => `
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 p-4">
+                        <span class="badge-category mb-2">${p.category_name || 'General'}</span>
+                        <h5 class="fw-bold mt-2">${p.title}</h5>
+                        <p class="text-muted small">${p.description.substring(0, 100)}...</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
+                            <span class="text-primary fw-bold">$${p.budget}</span>
+                            <a href="/projects/${p.id}/" class="btn btn-sm btn-outline-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(() => {
+            document.getElementById('recentProjects').innerHTML = '<p class="text-center text-muted">Could not load projects.</p>';
+        });
+</script>
+{% endblock %}

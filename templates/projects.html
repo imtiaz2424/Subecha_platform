@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Projects - Subecha{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">Browse Projects</h2>
+
+    <!-- Filter & Sort Bar -->
+    <div class="card p-4 mb-4">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Filter by Category</label>
+                <select id="categoryFilter" class="form-select" onchange="loadProjects()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Sort by Budget</label>
+                <select id="sortFilter" class="form-select" onchange="loadProjects()">
+                    <option value="-created_at">Latest First</option>
+                    <option value="budget">Budget: Low to High</option>
+                    <option value="-budget">Budget: High to Low</option>
+                    <option value="deadline">Deadline: Earliest</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button onclick="loadProjects()" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="row" id="projectsContainer">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load categories
+    fetch('/api/projects/categories/')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('categoryFilter');
+            data.forEach(cat => {
+                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        });
+
+    // Load projects
+    function loadProjects() {
+        const category = document.getElementById('categoryFilter').value;
+        const sort = document.getElementById('sortFilter').value;
+
+        let url = `/api/projects/?ordering=${sort}`;
+        if (category) url += `&category=${category}`;
+
+        document.getElementById('projectsContainer').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                const projects = data.results || data;
+                const container = document.getElementById('projectsContainer');
+
+                if (projects.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No projects found.</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = projects.map(p => `
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge-category">${p.category_name || 'General'}</span>
+                                <span class="badge bg-success">${p.status}</span>
+                            </div>
+                            <h5 class="fw-bold mt-2">${p.title}</h5>
+                            <p class="text-muted small">${p.description.substring(0, 120)}...</p>
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="fas fa-dollar-sign text-primary me-1"></i><strong>$${p.budget}</strong></span>
+                                    <span><i class="fas fa-calendar text-muted me-1"></i>${p.deadline}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small"><i class="fas fa-paper-plane me-1"></i>${p.proposal_count} proposals</span>
+                                    <a href="/projects/${p.id}/" class="btn btn-sm btn-primary">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(() => {
+                document.getElementById('projectsContainer').innerHTML = `
+                    <p class="text-center text-danger">Failed to load projects.</p>`;
+            });
+    }
+
+    loadProjects();
+</script>
+{% endblock %}

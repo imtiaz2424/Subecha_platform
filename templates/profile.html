@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Subecha{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Left: Profile Info -->
+        <div class="col-md-4">
+            <div class="card p-4 text-center mb-4">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px;height:80px;font-size:2rem">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h4 class="fw-bold" id="profileName"></h4>
+                <p class="text-muted" id="profileEmail"></p>
+                <span class="badge bg-primary" id="profileRole"></span>
+                <hr>
+                <p class="text-muted small" id="profileBio"></p>
+                <div id="skillsDiv" style="display:none">
+                    <h6 class="fw-bold">Skills</h6>
+                    <p class="text-muted small" id="profileSkills"></p>
+                </div>
+            </div>
+
+            <!-- Edit Profile -->
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-3">Edit Profile</h5>
+                <div id="editAlert" class="alert" style="display:none"></div>
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="editName" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Bio</label>
+                    <textarea id="editBio" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Skills</label>
+                    <input type="text" id="editSkills" class="form-control" placeholder="e.g. Python, Django, React">
+                </div>
+                <button onclick="updateProfile()" class="btn btn-primary w-100">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Applied Jobs -->
+        <div class="col-md-8">
+            <div class="card p-4">
+                <h5 class="fw-bold mb-4">
+                    <i class="fas fa-history me-2 text-primary"></i>Applied Jobs History
+                </h5>
+                <div id="appliedJobsContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const token = localStorage.getItem('access_token');
+
+    // Redirect if not logged in
+    if (!token) {
+        window.location.href = '/login/';
+    }
+
+    // Load profile
+    fetch('/api/auth/profile/', {
+        headers: {'Authorization': 'Bearer ' + token}
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('profileName').textContent = data.full_name;
+        document.getElementById('profileEmail').textContent = data.email;
+        document.getElementById('profileRole').textContent = data.role;
+        document.getElementById('profileBio').textContent = data.bio || 'No bio yet.';
+
+        if (data.skills) {
+            document.getElementById('skillsDiv').style.display = 'block';
+            document.getElementById('profileSkills').textContent = data.skills;
+        }
+
+        // Fill edit form
+        document.getElementById('editName').value = data.full_name;
+        document.getElementById('editBio').value = data.bio || '';
+        document.getElementById('editSkills').value = data.skills || '';
+    });
+
+    // Update profile
+    async function updateProfile() {
+        const alertBox = document.getElementById('editAlert');
+        const data = {
+            full_name: document.getElementById('editName').value,
+            bio: document.getElementById('editBio').value,
+            skills: document.getElementById('editSkills').value,
+        };
+
+        try {
+            const res = await fetch('/api/auth/profile/', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Profile updated successfully!';
+                document.getElementById('profileName').textContent = result.full_name;
+                document.getElementById('profileBio').textContent = result.bio || 'No bio yet.';
+                document.getElementById('profileSkills').textContent = result.skills || '';
+                // Update localStorage
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                user.full_name = result.full_name;
+                localStorage.setItem('user', JSON.stringify(user));
+            } else {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = 'Failed to update profile.';
+            }
+        } catch (err) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Something went wrong.';
+        }
+    }
+
+    // Load applied jobs
+    fetch('/api/auth/applied-jobs/', {
+        headers: {'Authorization': 'Bearer ' + token}
+    })
+    .then(res => res.json())
+    .then(data => {
+        const container = document.getElementById('appliedJobsContainer');
+
+        if (data.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">You have not applied for any jobs yet.</p>
+                    <a href="/projects/" class="btn btn-primary">Browse Projects</a>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = data.map(p => `
+            <div class="card mb-3 p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="fw-bold mb-1">${p.project_title}</h6>
+                        <p class="text-muted small mb-1">${p.cover_letter.substring(0, 100)}...</p>
+                        <small class="text-muted">
+                            <i class="fas fa-dollar-sign me-1"></i>$${p.project_budget} &nbsp;
+                            <i class="fas fa-clock me-1"></i>${new Date(p.submitted_at).toLocaleDateString()}
+                        </small>
+                    </div>
+                    <span class="badge ${p.status === 'accepted' ? 'bg-success' : p.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark'}">
+                        ${p.status}
+                    </span>
+                </div>
+                <div class="mt-2">
+                    <a href="/projects/${p.project}/" class="btn btn-sm btn-outline-primary">View Project</a>
+                </div>
+            </div>
+        `).join('');
+    })
+    .catch(() => {
+        document.getElementById('appliedJobsContainer').innerHTML =
+            '<p class="text-danger">Failed to load applied jobs.</p>';
+    });
+</script>
+{% endblock %}

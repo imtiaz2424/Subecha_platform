@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Subecha{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card p-5">
+                <h3 class="fw-bold text-center mb-4">Welcome Back</h3>
+                <div id="formAlert" class="alert" style="display:none"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email Address</label>
+                    <input type="email" id="email" class="form-control form-control-lg" placeholder="your@email.com">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Password</label>
+                    <input type="password" id="password" class="form-control form-control-lg" placeholder="Your password">
+                </div>
+
+                <button onclick="login()" class="btn btn-primary btn-lg w-100" id="loginBtn">
+                    Login
+                </button>
+
+                <p class="text-center mt-3 text-muted">
+                    Don't have an account? <a href="/register/" class="text-primary">Register</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Redirect if already logged in
+    if (localStorage.getItem('access_token')) {
+        window.location.href = '/';
+    }
+
+    async function login() {
+        const btn = document.getElementById('loginBtn');
+        const alertBox = document.getElementById('formAlert');
+
+        const data = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+        };
+
+        if (!data.email || !data.password) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Please fill in all fields.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
+
+        try {
+            const res = await fetch('/api/auth/login/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                localStorage.setItem('access_token', result.access);
+                localStorage.setItem('refresh_token', result.refresh);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                window.location.href = '/';
+            } else {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = result.error || 'Login failed.';
+                btn.disabled = false;
+                btn.innerHTML = 'Login';
+            }
+        } catch (err) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Something went wrong. Please try again.';
+            btn.disabled = false;
+            btn.innerHTML = 'Login';
+        }
+    }
+
+    // Allow Enter key to login
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') login();
+    });
+</script>
+{% endblock %}

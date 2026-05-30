@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Subecha{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card p-5">
+                <h3 class="fw-bold text-center mb-4">Create Account</h3>
+                <div id="formAlert" class="alert" style="display:none"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Full Name</label>
+                    <input type="text" id="full_name" class="form-control form-control-lg" placeholder="Your full name">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email Address</label>
+                    <input type="email" id="email" class="form-control form-control-lg" placeholder="your@email.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">I am a</label>
+                    <select id="role" class="form-select form-select-lg">
+                        <option value="freelancer">Freelancer</option>
+                        <option value="client">Client</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <input type="password" id="password" class="form-control form-control-lg" placeholder="Min 8 characters">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Confirm Password</label>
+                    <input type="password" id="password2" class="form-control form-control-lg" placeholder="Repeat password">
+                </div>
+
+                <button onclick="register()" class="btn btn-primary btn-lg w-100" id="registerBtn">
+                    Create Account
+                </button>
+
+                <p class="text-center mt-3 text-muted">
+                    Already have an account? <a href="/login/" class="text-primary">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function register() {
+        const btn = document.getElementById('registerBtn');
+        const alert = document.getElementById('formAlert');
+
+        const data = {
+            full_name: document.getElementById('full_name').value,
+            email: document.getElementById('email').value,
+            role: document.getElementById('role').value,
+            password: document.getElementById('password').value,
+            password2: document.getElementById('password2').value,
+        };
+
+        if (!data.full_name || !data.email || !data.password || !data.password2) {
+            alert.style.display = 'block';
+            alert.className = 'alert alert-danger';
+            alert.textContent = 'Please fill in all fields.';
+            return;
+        }
+
+        if (data.password !== data.password2) {
+            alert.style.display = 'block';
+            alert.className = 'alert alert-danger';
+            alert.textContent = 'Passwords do not match.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+
+        try {
+            const res = await fetch('/api/auth/register/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                alert.style.display = 'block';
+                alert.className = 'alert alert-success';
+                alert.textContent = result.message;
+                btn.innerHTML = '✅ Registered!';
+            } else {
+                alert.style.display = 'block';
+                alert.className = 'alert alert-danger';
+                const errors = Object.values(result).flat().join(' ');
+                alert.textContent = errors;
+                btn.disabled = false;
+                btn.innerHTML = 'Create Account';
+            }
+        } catch (err) {
+            alert.style.display = 'block';
+            alert.className = 'alert alert-danger';
+            alert.textContent = 'Something went wrong. Please try again.';
+            btn.disabled = false;
+            btn.innerHTML = 'Create Account';
+        }
+    }
+</script>
+{% endblock %}
