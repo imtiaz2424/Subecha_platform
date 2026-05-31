@@ -21,17 +21,21 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token = get_random_string(64)
+        import secrets
+        token = secrets.token_hex(32)
         user.verification_token = token
         user.save()
         verify_url = f"{settings.FRONTEND_URL}/verify-email/?token={token}"
-        send_mail(
-            subject='Verify Your Email - Freelancer Platform',
-            message=f'Hi {user.full_name},\n\nClick the link to verify your email:\n{verify_url}\n\nThank you!',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
+        try:
+            send_mail(
+                subject='Verify Your Email - Freelancer Platform',
+                message=f'Hi {user.full_name},\n\nClick the link to verify your email:\n{verify_url}\n\nThank you!',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print(f"Email error: {e}")
         return Response({
             'message': 'Registration successful! Please check your email to verify your account.'
         }, status=status.HTTP_201_CREATED)

@@ -12,11 +12,23 @@ class CategorySerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.full_name', read_only=True)
     freelancer_name = serializers.CharField(source='freelancer.full_name', read_only=True)
+    freelancer_email = serializers.EmailField(write_only=True, required=False)
 
     class Meta:
         model = Review
-        fields = ['id', 'project', 'client', 'client_name', 'freelancer', 'freelancer_name', 'rating', 'comment', 'created_at']
-        read_only_fields = ['client', 'created_at']
+        fields = ['id', 'project', 'client', 'client_name', 'freelancer', 'freelancer_name', 'freelancer_email', 'rating', 'comment', 'created_at']
+        read_only_fields = ['client', 'freelancer', 'created_at']
+
+    def create(self, validated_data):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        freelancer_email = validated_data.pop('freelancer_email', None)
+        try:
+            freelancer = User.objects.get(email=freelancer_email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'error': 'Freelancer not found with this email.'})
+        validated_data['freelancer'] = freelancer
+        return super().create(validated_data)
 
 
 class ProjectSerializer(serializers.ModelSerializer):

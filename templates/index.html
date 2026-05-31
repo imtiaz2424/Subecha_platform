@@ -1,56 +1,93 @@
 {% extends 'base.html' %}
+{% block title %}Subecha - Find The Right Freelance Service{% endblock %}
 
-{% block title %}Subecha - Find Top Freelancers{% endblock %}
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'index.css' %}">
+{% endblock %}
 
 {% block content %}
+
 <!-- Hero Section -->
-<section style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 80px 0;">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold mb-4">Find the Perfect Freelancer</h1>
-        <p class="lead mb-5">Connect with skilled professionals for your projects</p>
-        <div class="d-flex gap-3 justify-content-center">
-            <a href="/projects/" class="btn btn-light btn-lg px-5">Browse Projects</a>
-            <a href="/register/" class="btn btn-outline-light btn-lg px-5">Get Started</a>
-        </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="py-5 bg-white">
+<section class="hero-section">
     <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4 mb-4">
-                <div class="card p-4">
-                    <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
-                    <h3 class="fw-bold" id="totalProjects">0</h3>
-                    <p class="text-muted">Active Projects</p>
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="hero-title">Find The Right <span class="text-accent">Freelance</span> Service, Right Away</h1>
+                <p class="hero-subtitle">Find skilled freelancers for any project. Discover top services and hire the best talent.</p>
+
+                <!-- Search Bar -->
+                <div class="hero-search-box">
+                    <div class="search-input-wrap">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Job title, keywords or company">
+                    </div>
+                    <select id="searchCategory">
+                        <option value="">All Categories</option>
+                    </select>
+                    <button onclick="searchProjects()">Search</button>
+                </div>
+
+                <!-- Top Services -->
+                <div class="top-services mt-3">
+                    <span class="text-muted me-2">Top Services:</span>
+                    <a href="/projects/?search=graphics" class="service-tag">Graphics</a>
+                    <a href="/projects/?search=website" class="service-tag">Website</a>
+                    <a href="/projects/?search=logo" class="service-tag">Logo</a>
+                    <a href="/projects/?search=dev" class="service-tag">Dev</a>
+                    <a href="/projects/?search=seo" class="service-tag">SEO</a>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card p-4">
-                    <i class="fas fa-users fa-3x text-purple mb-3" style="color:#7c3aed"></i>
-                    <h3 class="fw-bold">500+</h3>
-                    <p class="text-muted">Freelancers</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card p-4">
-                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                    <h3 class="fw-bold">1000+</h3>
-                    <p class="text-muted">Completed Projects</p>
-                </div>
+            <div class="col-lg-6 d-none d-lg-block text-end">
+                <img src="https://img.freepik.com/free-photo/young-woman-using-laptop_1303-18269.jpg" class="hero-img" alt="Freelancer">
             </div>
         </div>
     </div>
 </section>
 
-<!-- Recent Projects -->
+<!-- Trusted By -->
+<section class="trusted-section py-4 bg-white">
+    <div class="container">
+        <p class="text-center text-muted mb-3">Trusted by leading enterprise organizations and freelancers globally</p>
+        <div class="trusted-logos">
+            <span class="trusted-logo">PANADOXN</span>
+            <span class="trusted-logo">Shangxi</span>
+            <span class="trusted-logo">Vanfaba</span>
+            <span class="trusted-logo">LH.Tech</span>
+            <span class="trusted-logo">Tyaalpha</span>
+            <span class="trusted-logo">BRYCRY.TEC</span>
+        </div>
+    </div>
+</section>
+
+<!-- Top Categories -->
 <section class="py-5">
     <div class="container">
-        <h2 class="fw-bold mb-4 text-center">Recent Projects</h2>
-        <div class="row" id="recentProjects">
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status"></div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="section-title">Top Categories</h2>
+                <p class="text-muted">Explore a wide range of services organized by category</p>
+            </div>
+            <a href="/projects/" class="btn-view-all">All Categories →</a>
+        </div>
+        <div class="row" id="categoriesContainer">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Projects -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Latest Projects</h2>
+            <p class="text-muted">Discover our latest projects with cutting-edge features. Explore now!</p>
+        </div>
+        <div class="row" id="latestProjects">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
             </div>
         </div>
         <div class="text-center mt-4">
@@ -59,66 +96,93 @@
     </div>
 </section>
 
-<!-- How it Works -->
+<!-- How It Works -->
 <section class="py-5 bg-white">
     <div class="container">
-        <h2 class="fw-bold mb-5 text-center">How It Works</h2>
+        <div class="text-center mb-5">
+            <h2 class="section-title">How It Works On Employers</h2>
+            <p class="text-muted">Recruitment made easy in 100 seconds</p>
+        </div>
         <div class="row text-center">
-            <div class="col-md-4 mb-4">
-                <div class="card p-4 h-100">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:bold;">1</div>
-                    <h5 class="fw-bold">Post a Project</h5>
-                    <p class="text-muted">Describe your project and set your budget</p>
+            <div class="col-md-3 mb-4">
+                <div class="how-card">
+                    <div class="how-icon"><i class="fas fa-briefcase"></i></div>
+                    <h5 class="fw-bold mt-3">Post Your Job</h5>
+                    <p class="text-muted small">Create a job listing with details like requirements and budget.</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card p-4 h-100">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:bold;">2</div>
-                    <h5 class="fw-bold">Receive Proposals</h5>
-                    <p class="text-muted">Get proposals from skilled freelancers</p>
+            <div class="col-md-3 mb-4">
+                <div class="how-card">
+                    <div class="how-icon"><i class="fas fa-users"></i></div>
+                    <h5 class="fw-bold mt-3">Review Applicants</h5>
+                    <p class="text-muted small">Receive and evaluate applications from freelancers.</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card p-4 h-100">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:bold;">3</div>
-                    <h5 class="fw-bold">Get it Done</h5>
-                    <p class="text-muted">Work with the best and get results</p>
+            <div class="col-md-3 mb-4">
+                <div class="how-card">
+                    <div class="how-icon"><i class="fas fa-user-check"></i></div>
+                    <h5 class="fw-bold mt-3">Choose a Freelancer</h5>
+                    <p class="text-muted small">Conduct interviews to choose the best candidate.</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="how-card">
+                    <div class="how-icon"><i class="fas fa-tasks"></i></div>
+                    <h5 class="fw-bold mt-3">Manage the Project</h5>
+                    <p class="text-muted small">Collaborate with the selected freelancer to complete the project.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
-{% endblock %}
+
+<!-- Stats Section -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 col-6 mb-4">
+                <h2 class="stats-number">2.5M+</h2>
+                <p class="stats-label">Jobs Available</p>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <h2 class="stats-number">177k+</h2>
+                <p class="stats-label">New Jobs This Week!</p>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <h2 class="stats-number">298k+</h2>
+                <p class="stats-label">Companies Hiring</p>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <h2 class="stats-number">5M+</h2>
+                <p class="stats-label">Total Freelancers</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+    <div class="container">
+        <div class="cta-box">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="fw-bold">Embrace Independence</h3>
+                    <h4>Start Your Freelance Journey Now</h4>
+                    <p class="text-muted">Connect with your Designer in minutes.</p>
+                    <a href="/register/" class="btn btn-dark btn-lg px-5">Become A Seller</a>
+                </div>
+                <div class="col-md-4 d-none d-md-block text-end">
+                    <img src="https://img.freepik.com/free-photo/portrait-young-businesswoman_171337-5453.jpg" style="width:200px;border-radius:12px;" alt="CTA">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 
 {% block extra_js %}
-<script>
-    // Load recent projects
-    fetch('/api/projects/')
-        .then(res => res.json())
-        .then(data => {
-            const projects = data.results || data;
-            document.getElementById('totalProjects').textContent = projects.length + '+';
-            const container = document.getElementById('recentProjects');
-            if (projects.length === 0) {
-                container.innerHTML = '<p class="text-center text-muted">No projects yet.</p>';
-                return;
-            }
-            container.innerHTML = projects.slice(0, 3).map(p => `
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 p-4">
-                        <span class="badge-category mb-2">${p.category_name || 'General'}</span>
-                        <h5 class="fw-bold mt-2">${p.title}</h5>
-                        <p class="text-muted small">${p.description.substring(0, 100)}...</p>
-                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
-                            <span class="text-primary fw-bold">$${p.budget}</span>
-                            <a href="/projects/${p.id}/" class="btn btn-sm btn-outline-primary">View Details</a>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        })
-        .catch(() => {
-            document.getElementById('recentProjects').innerHTML = '<p class="text-center text-muted">Could not load projects.</p>';
-        });
-</script>
+{% load static %}
+<script src="{% static 'index.js' %}"></script>
+{% endblock %}
+
 {% endblock %}

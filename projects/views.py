@@ -54,7 +54,15 @@ class ReviewCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(client=self.request.user)
+        freelancer_email = self.request.data.get('freelancer_email')
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            freelancer = User.objects.get(email=freelancer_email)
+            serializer.save(client=self.request.user, freelancer=freelancer)
+        except Exception as e:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'error': f'Freelancer not found: {str(e)}'})
 
 
 class FreelancerReviewsView(generics.ListAPIView):
