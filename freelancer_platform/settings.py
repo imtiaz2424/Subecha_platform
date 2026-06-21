@@ -115,6 +115,9 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your_app_password')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 FRONTEND_URL = config('FRONTEND_URL', default='http://127.0.0.1:8000')
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
 
 # Whitenoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
